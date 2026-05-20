@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Browse Vacancies — ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-white mb-2">Open Vacancies</h1>
+        <p class="text-surface-400">Browse available positions and apply with your resume</p>
+    </div>
+
+    <div class="glass-card-light p-4 mb-6 flex flex-col sm:flex-row gap-4">
+        <div class="flex-1">
+            <input type="text" id="search-input" placeholder="Search by title..." class="input-field w-full px-4 py-2.5 text-sm" oninput="filterVacancies()">
+        </div>
+        <div class="flex items-center text-surface-400 text-sm">
+            <span id="vacancy-count">0</span>&nbsp;vacancies found
+        </div>
+    </div>
+
+    <div id="vacancies-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+    <div id="empty-state" class="hidden text-center py-16">
+        <svg class="w-16 h-16 mx-auto text-surface-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.193 23.193 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+        </svg>
+        <h3 class="text-lg font-semibold text-surface-400 mb-1">No vacancies available</h3>
+        <p class="text-surface-500 text-sm">Check back later for new openings</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allVacancies = [];
+
+    async function loadVacancies() {
+        showLoading('vacancies-container');
+        try {
+            const response = await apiFetch('/api/vacancies/', { method: 'GET' });
+            const data = await response.json();
+            allVacancies = data;
+            renderVacancies(data);
+        } catch (err) {
+            document.getElementById('vacancies-container').innerHTML = '<div class="col-span-full text-center py-8 text-red-400">Failed to load vacancies.</div>';
+        }
+    }
+
+    function renderVacancies(vacancies) {
+        const container = document.getElementById('vacancies-container');
+        const emptyState = document.getElementById('empty-state');
+        document.getElementById('vacancy-count').textContent = vacancies.length;
+
+        if (vacancies.length === 0) { container.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
+        emptyState.classList.add('hidden');
+
+        container.innerHTML = vacancies.map((v, i) => `
+            <div class="glass-card p-6 transition-all-smooth hover:scale-[1.02] hover:glow-primary cursor-pointer" onclick="window.location.href='/vacancies/${v.id}/'" style="animation-delay: ${i * 0.1}s">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500/20 to-accent-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.193 23.193 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <span class="text-xs text-surface-500">${new Date(v.created_at).toLocaleDateString()}</span>
+                </div>
+                <h3 class="text-lg font-semibold text-white mb-3 line-clamp-2">${v.title}</h3>
+                <div class="flex items-center justify-between">
+                    <span class="flex items-center text-sm text-surface-400">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        ${v.no_of_positions} position${v.no_of_positions !== 1 ? 's' : ''}
+                    </span>
+                    <svg class="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function filterVacancies() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        renderVacancies(allVacancies.filter(v => v.title.toLowerCase().includes(query)));
+    }
+
+    document.addEventListener('DOMContentLoaded', loadVacancies);
+</script>
+{% endblock %}

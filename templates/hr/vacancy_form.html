@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}{% if vacancy_id %}Edit{% else %}Create{% endif %} Vacancy — ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in max-w-2xl mx-auto">
+    <a href="/hr/vacancies/" class="inline-flex items-center text-surface-400 hover:text-primary-400 transition-colors text-sm mb-6">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg> Back
+    </a>
+    <div class="glass-card p-8">
+        <h1 class="text-2xl font-bold text-white mb-6">{% if vacancy_id %}Edit Vacancy{% else %}Create Vacancy{% endif %}</h1>
+        <form id="vacancy-form" onsubmit="handleSubmit(event)">
+            <div class="mb-5"><label class="block text-sm font-medium text-surface-300 mb-2">Job Title</label><input type="text" id="v-title" required class="input-field w-full px-4 py-3 text-sm" placeholder="e.g. Senior Developer"></div>
+            <div class="mb-5"><label class="block text-sm font-medium text-surface-300 mb-2">Description</label><textarea id="v-description" required rows="5" class="input-field w-full px-4 py-3 text-sm resize-y"></textarea></div>
+            <div class="mb-5"><label class="block text-sm font-medium text-surface-300 mb-2">Requirements</label><textarea id="v-requirements" required rows="4" class="input-field w-full px-4 py-3 text-sm resize-y"></textarea></div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div><label class="block text-sm font-medium text-surface-300 mb-2">Positions</label><input type="number" id="v-positions" required min="1" class="input-field w-full px-4 py-3 text-sm"></div>
+                <div><label class="block text-sm font-medium text-surface-300 mb-2">Deadline</label><input type="date" id="v-date" required class="input-field w-full px-4 py-3 text-sm"></div>
+            </div>
+            <div id="form-error" class="hidden mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm"></div>
+            <button type="submit" id="form-btn" class="btn-primary w-full py-3 rounded-xl text-white font-semibold text-sm">{% if vacancy_id %}Update{% else %}Create{% endif %} Vacancy</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const vacancyId = '{{ vacancy_id|default_if_none:"" }}';
+    const isEdit = vacancyId !== '' && vacancyId !== 'None';
+    async function loadVacancy() { if (!isEdit) return; try { const r = await apiFetch(`/api/vacancies/${vacancyId}/`, {method:'GET'}); const v = await r.json(); document.getElementById('v-title').value=v.title; document.getElementById('v-description').value=v.description; document.getElementById('v-requirements').value=v.requirements; document.getElementById('v-positions').value=v.no_of_positions; document.getElementById('v-date').value=v.date; } catch(e){showToast('Failed to load.','error');} }
+    async function handleSubmit(e) { e.preventDefault(); const btn=document.getElementById('form-btn'); const err=document.getElementById('form-error'); err.classList.add('hidden'); const p={title:document.getElementById('v-title').value,description:document.getElementById('v-description').value,requirements:document.getElementById('v-requirements').value,no_of_positions:parseInt(document.getElementById('v-positions').value),date:document.getElementById('v-date').value}; btn.disabled=true; btn.innerHTML='<div class="spinner mx-auto" style="width:20px;height:20px;border-width:2px;border-top-color:#fff;"></div>'; try { const r=await apiFetch(isEdit?`/api/vacancies/${vacancyId}/`:'/api/vacancies/',{method:isEdit?'PUT':'POST',body:JSON.stringify(p)}); if(r.ok){showToast(isEdit?'Updated!':'Created!');setTimeout(()=>window.location.href='/hr/vacancies/',500);}else{const d=await r.json();let errs=[];for(const[k,v]of Object.entries(d))errs.push(Array.isArray(v)?`${k}: ${v.join(', ')}`:v);err.textContent=errs.join(' | ');err.classList.remove('hidden');} }catch(ex){err.textContent='Network error.';err.classList.remove('hidden');}finally{btn.disabled=false;btn.textContent=isEdit?'Update Vacancy':'Create Vacancy';} }
+    document.addEventListener('DOMContentLoaded',()=>{const u=getUserData();if(!u||u.role!=='hr'){window.location.href='/';return;}loadVacancy();});
+</script>
+{% endblock %}

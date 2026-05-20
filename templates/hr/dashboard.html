@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}HR Dashboard — ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-white mb-2">HR Dashboard</h1>
+        <p class="text-surface-400">Overview of your recruitment activity</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="glass-card p-6 gradient-border animate-pulse-glow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500/20 to-primary-600/20 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.193 23.193 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-white mb-1" id="total-vacancies">—</p>
+            <p class="text-surface-400 text-sm">Total Vacancies</p>
+        </div>
+        <div class="glass-card p-6 gradient-border">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-500/20 to-accent-600/20 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+            </div>
+            <p class="text-3xl font-bold text-white mb-1" id="total-applicants">—</p>
+            <p class="text-surface-400 text-sm">Total Applications</p>
+        </div>
+        <div class="glass-card p-6 gradient-border">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div class="spinner" id="pending-spinner" style="display:none; width:18px; height:18px; border-width:2px;"></div>
+            </div>
+            <p class="text-3xl font-bold text-white mb-1" id="pending-analyses">—</p>
+            <p class="text-surface-400 text-sm">Pending Analyses</p>
+        </div>
+    </div>
+
+    <!-- Vacancies Table -->
+    <div class="glass-card p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-white">Your Vacancies</h2>
+            <a href="/hr/vacancies/create/" class="btn-primary px-4 py-2 rounded-lg text-white text-sm font-medium flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                New Vacancy
+            </a>
+        </div>
+        <div id="vacancies-table"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadDashboard() {
+        showLoading('vacancies-table');
+        try {
+            const vacResponse = await apiFetch('/api/vacancies/', { method: 'GET' });
+            const vacancies = await vacResponse.json();
+            const appResponse = await apiFetch('/api/applications/list/', { method: 'GET' });
+            const applications = await appResponse.json();
+
+            document.getElementById('total-vacancies').textContent = vacancies.length;
+            document.getElementById('total-applicants').textContent = applications.length;
+            const pending = applications.filter(a => a.status === 'pending' || a.status === 'processing').length;
+            document.getElementById('pending-analyses').textContent = pending;
+            if (pending > 0) document.getElementById('pending-spinner').style.display = 'block';
+
+            const tableContainer = document.getElementById('vacancies-table');
+            if (vacancies.length === 0) { tableContainer.innerHTML = '<div class="text-center py-8 text-surface-500">No vacancies yet. Create your first vacancy.</div>'; return; }
+
+            tableContainer.innerHTML = `<div class="overflow-x-auto"><table class="w-full">
+                <thead><tr class="border-b border-surface-700">
+                    <th class="text-left text-xs font-semibold text-surface-400 uppercase tracking-wider py-3 px-4">Title</th>
+                    <th class="text-left text-xs font-semibold text-surface-400 uppercase tracking-wider py-3 px-4">Positions</th>
+                    <th class="text-left text-xs font-semibold text-surface-400 uppercase tracking-wider py-3 px-4">Date</th>
+                    <th class="text-left text-xs font-semibold text-surface-400 uppercase tracking-wider py-3 px-4">Applicants</th>
+                    <th class="text-right text-xs font-semibold text-surface-400 uppercase tracking-wider py-3 px-4">Actions</th>
+                </tr></thead>
+                <tbody>${vacancies.map(v => {
+                    const appCount = applications.filter(a => a.vacancy === v.id).length;
+                    return `<tr class="border-b border-surface-800 table-row-hover">
+                        <td class="py-4 px-4 text-white font-medium text-sm">${v.title}</td>
+                        <td class="py-4 px-4 text-surface-400 text-sm">${v.no_of_positions}</td>
+                        <td class="py-4 px-4 text-surface-400 text-sm">${new Date(v.date).toLocaleDateString()}</td>
+                        <td class="py-4 px-4"><span class="badge badge-${appCount > 0 ? 'analysed' : 'pending'}">${appCount}</span></td>
+                        <td class="py-4 px-4 text-right">
+                            <a href="/hr/vacancies/${v.id}/applicants/" class="text-primary-400 hover:text-primary-300 text-sm font-medium mr-3">View Applicants</a>
+                            <a href="/hr/vacancies/${v.id}/edit/" class="text-surface-400 hover:text-white text-sm">Edit</a>
+                        </td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table></div>`;
+        } catch (err) {
+            document.getElementById('vacancies-table').innerHTML = '<div class="text-center py-8 text-red-400">Failed to load dashboard.</div>';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = getUserData();
+        if (!user || user.role !== 'hr') { window.location.href = '/'; return; }
+        loadDashboard();
+    });
+</script>
+{% endblock %}

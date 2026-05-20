@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ResumeIQ — AI-Powered Resume Analysis & Ranking Platform for HR Teams">
+    <title>{% block title %}ResumeIQ{% endblock %}</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81' },
+                        accent: { 50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4', 300: '#5eead4', 400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 800: '#115e59', 900: '#134e4a' },
+                        surface: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a', 950: '#020617' },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%); min-height: 100vh; }
+
+        /* Glass morphism card */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 16px;
+        }
+
+        .glass-card-light {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+        }
+
+        /* Animated gradient border */
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(20, 184, 166, 0.1));
+            border-radius: 16px;
+        }
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 1px;
+            background: linear-gradient(135deg, #6366f1, #14b8a6);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* Glow effects */
+        .glow-primary { box-shadow: 0 0 40px rgba(99, 102, 241, 0.15); }
+        .glow-accent { box-shadow: 0 0 40px rgba(20, 184, 166, 0.15); }
+
+        /* Smooth transitions */
+        .transition-all-smooth { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* Button hover */
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #818cf8, #6366f1);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
+        }
+        .btn-disable {
+            background: linear-gradient(135deg, #5b6b69, #494d4d);
+            transition: all 0.3s ease;
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, #14b8a6, #0d9488);
+            transition: all 0.3s ease;
+        }
+        .btn-accent:hover {
+            background: linear-gradient(135deg, #2dd4bf, #14b8a6);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(20, 184, 166, 0.35);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+            transform: translateY(-1px);
+        }
+
+        /* Input styling */
+        .input-field {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 10px;
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            outline: none;
+        }
+        .input-field::placeholder { color: #64748b; }
+
+        /* Status badges */
+        .badge { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .badge-pending { background: rgba(151, 148, 139, 0.15); color: #f7f6f3; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .badge-processing { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-analysed { background: rgba(40, 137, 175, 0.15); color: #35cafc; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-rejected { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-accepted { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+
+
+        /* Rating badges */
+        .rating-excellent { background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2)); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .rating-good { background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.2)); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .rating-average { background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.2)); color: #fbbf24; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .rating-below-average { background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(239, 68, 68, 0.2)); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); }
+        .rating-poor { background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2)); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Floating animation */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+
+        /* Pulse glow */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.1); }
+            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.25); }
+        }
+        .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+        /* Score circle */
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        /* Table row hover */
+        .table-row-hover { transition: background 0.2s ease; }
+        .table-row-hover:hover { background: rgba(99, 102, 241, 0.05); }
+
+        /* Fade in animation */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+
+        /* Toast notification */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+            padding: 16px 24px; border-radius: 12px;
+            font-weight: 500; font-size: 0.875rem;
+            transform: translateY(100px); opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast-success { background: rgba(34, 197, 94, 0.9); color: white; }
+        .toast-error { background: rgba(239, 68, 68, 0.9); color: white; }
+
+        /* ─── Hamburger Menu ─────────────────────────────── */
+        .hamburger { display: none; cursor: pointer; padding: 8px; }
+        .hamburger span {
+            display: block; width: 22px; height: 2px;
+            background: #94a3b8; margin: 5px 0;
+            transition: all 0.3s ease; border-radius: 2px;
+        }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        .mobile-menu {
+            display: none; position: absolute; top: 64px; left: 0; right: 0;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+            padding: 16px 20px; z-index: 49;
+        }
+        .mobile-menu.show { display: block; animation: fadeIn 0.25s ease-out; }
+        .mobile-menu a, .mobile-menu button {
+            display: block; padding: 12px 0; font-size: 0.95rem;
+            color: #cbd5e1; text-decoration: none; border: none; background: none;
+            width: 100%; text-align: left; cursor: pointer;
+        }
+        .mobile-menu a:hover, .mobile-menu button:hover { color: #818cf8; }
+        .mobile-menu .mobile-divider {
+            height: 1px; background: rgba(99, 102, 241, 0.15); margin: 8px 0;
+        }
+
+        /* ─── Mobile Responsive ──────────────────────────── */
+        @media (max-width: 768px) {
+            .hamburger { display: block; }
+            #nav-links, #nav-auth { display: none !important; }
+
+            /* Toast repositioned */
+            .toast { left: 16px; right: 16px; bottom: 16px; text-align: center; }
+
+            /* Glass cards tighter padding */
+            .glass-card { border-radius: 12px; }
+
+            /* Score circle smaller on mobile */
+            .score-circle { width: 100px; height: 100px; }
+
+            /* Make tables scroll horizontally */
+            table { font-size: 0.8rem; }
+            th, td { padding: 10px 8px !important; }
+
+            /* Full-width buttons on mobile */
+            .btn-primary, .btn-accent, .btn-disable, .btn-danger {
+                padding-left: 16px; padding-right: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.5rem !important; }
+            .glass-card { padding: 16px; }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-menu { display: none !important; }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="text-surface-200 antialiased">
+
+    <!-- Navigation Bar -->
+    <nav class="navbar sticky top-0 z-50" id="main-navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <a href="/" class="text-xl font-bold bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+                        ResumeIQ
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation Links (shown when logged in) -->
+                <div class="flex items-center space-x-4" id="nav-links" style="display: none;">
+                    <div id="nav-candidate" style="display: none;" class="flex items-center space-x-4">
+                        <a href="/vacancies/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Vacancies</a>
+                        <a href="/my-applications/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">My Applications</a>
+                    </div>
+                    <div id="nav-hr" style="display: none;" class="flex items-center space-x-4">
+                        <a href="/hr/dashboard/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Dashboard</a>
+                        <a href="/hr/vacancies/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Vacancies</a>
+                        <a href="/hr/create-user/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Create User</a>
+                    </div>
+                    <div class="flex items-center space-x-3 ml-4 pl-4 border-l border-surface-700">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+                            <span class="text-white text-xs font-bold" id="nav-avatar">U</span>
+                        </div>
+                        <span class="text-surface-300 text-sm font-medium" id="nav-username">User</span>
+                        <button onclick="logout()" class="text-surface-400 hover:text-red-400 transition-colors text-sm font-medium ml-2">Logout</button>
+                    </div>
+                </div>
+
+                <!-- Desktop Login link (shown when not logged in) -->
+                <div id="nav-auth" style="display: none;" class="flex items-center space-x-3">
+                    <a href="/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Login</a>
+                    <a href="/register/" class="btn-primary text-white text-sm font-medium px-4 py-2 rounded-lg">Register</a>
+                </div>
+
+                <!-- Hamburger (mobile only) -->
+                <div class="hamburger" id="hamburger" onclick="toggleMobileMenu()">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown Menu -->
+        <div class="mobile-menu" id="mobile-menu">
+            <div id="mobile-menu-auth" style="display:none;">
+                <a href="/">Login</a>
+                <a href="/register/">Register</a>
+            </div>
+            <div id="mobile-menu-candidate" style="display:none;">
+                <a href="/vacancies/">Browse Vacancies</a>
+                <a href="/my-applications/">My Applications</a>
+            </div>
+            <div id="mobile-menu-hr" style="display:none;">
+                <a href="/hr/dashboard/">Dashboard</a>
+                <a href="/hr/vacancies/">Manage Vacancies</a>
+                <a href="/hr/create-user/">Create User</a>
+            </div>
+            <div id="mobile-menu-user" style="display:none;">
+                <div class="mobile-divider"></div>
+                <div style="padding:12px 0; display:flex; align-items:center; gap:10px;">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+                        <span class="text-white text-xs font-bold" id="mobile-avatar">U</span>
+                    </div>
+                    <span class="text-surface-300 text-sm font-medium" id="mobile-username">User</span>
+                </div>
+                <button onclick="logout()" style="color:#f87171;">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Toast notification container -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Core JavaScript — Auth State + API Helpers -->
+    <script>
+        // ─── Auth Helpers ───────────────────────────────────
+
+        function getTokens() {
+            const access = localStorage.getItem('access_token');
+            const refresh = localStorage.getItem('refresh_token');
+            return { access, refresh };
+        }
+
+        function setTokens(access, refresh) {
+            localStorage.setItem('access_token', access);
+            if (refresh) localStorage.setItem('refresh_token', refresh);
+        }
+
+        function clearTokens() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_data');
+        }
+
+        function getUserData() {
+            const data = localStorage.getItem('user_data');
+            return data ? JSON.parse(data) : null;
+        }
+
+        function setUserData(data) {
+            localStorage.setItem('user_data', JSON.stringify(data));
+        }
+
+        function isLoggedIn() {
+            return !!getTokens().access;
+        }
+
+        function logout() {
+            clearTokens();
+            window.location.href = '/';
+        }
+
+        // ─── API Fetch Helper ───────────────────────────────
+
+        async function apiFetch(url, options = {}) {
+            const tokens = getTokens();
+            const headers = options.headers || {};
+
+            if (tokens.access) {
+                headers['Authorization'] = `Bearer ${tokens.access}`;
+            }
+
+            // Don't set Content-Type for FormData (browser sets multipart boundary)
+            if (!(options.body instanceof FormData)) {
+                headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+            }
+
+            options.headers = headers;
+
+            let response = await fetch(url, options);
+
+            // If 401, try refreshing the token
+            if (response.status === 401 && tokens.refresh) {
+                const refreshResponse = await fetch('/api/auth/refresh/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh: tokens.refresh }),
+                });
+
+                if (refreshResponse.ok) {
+                    const data = await refreshResponse.json();
+                    setTokens(data.access, data.refresh || tokens.refresh);
+                    headers['Authorization'] = `Bearer ${data.access}`;
+                    response = await fetch(url, options);
+                } else {
+                    clearTokens();
+                    window.location.href = '/';
+                    return null;
+                }
+            }
+
+            return response;
+        }
+
+        // ─── Toast Notifications ─────────────────────────────
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ─── Status Badge Helper ─────────────────────────────
+
+        function getStatusBadge(status) {
+            const cls = `badge badge-${status}`;
+            return `<span class="${cls}">${status}</span>`;
+        }
+
+        function getRatingBadge(rating) {
+            const key = rating.toLowerCase().replace(/\s+/g, '-');
+            return `<span class="badge rating-${key}">${rating}</span>`;
+        }
+
+        // ─── Mobile Menu Toggle ─────────────────────────────
+
+        function toggleMobileMenu() {
+            const hamburger = document.getElementById('hamburger');
+            const menu = document.getElementById('mobile-menu');
+            hamburger.classList.toggle('active');
+            menu.classList.toggle('show');
+        }
+
+        // Close mobile menu when clicking a link
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('mobile-menu');
+            const hamburger = document.getElementById('hamburger');
+            if (menu && !menu.contains(e.target) && !hamburger.contains(e.target)) {
+                menu.classList.remove('show');
+                hamburger.classList.remove('active');
+            }
+        });
+
+        // ─── Navbar State ────────────────────────────────────
+
+        function updateNavbar() {
+            const user = getUserData();
+            const navLinks = document.getElementById('nav-links');
+            const navAuth = document.getElementById('nav-auth');
+            const navCandidate = document.getElementById('nav-candidate');
+            const navHR = document.getElementById('nav-hr');
+            const navUsername = document.getElementById('nav-username');
+            const navAvatar = document.getElementById('nav-avatar');
+
+            // Mobile menu elements
+            const mobileAuth = document.getElementById('mobile-menu-auth');
+            const mobileCandidate = document.getElementById('mobile-menu-candidate');
+            const mobileHR = document.getElementById('mobile-menu-hr');
+            const mobileUser = document.getElementById('mobile-menu-user');
+            const mobileAvatar = document.getElementById('mobile-avatar');
+            const mobileUsername = document.getElementById('mobile-username');
+
+            if (user && isLoggedIn()) {
+                navLinks.style.display = 'flex';
+                navAuth.style.display = 'none';
+                navUsername.textContent = user.username;
+                navAvatar.textContent = user.username.charAt(0).toUpperCase();
+
+                // Mobile
+                mobileAuth.style.display = 'none';
+                mobileUser.style.display = 'block';
+                mobileAvatar.textContent = user.username.charAt(0).toUpperCase();
+                mobileUsername.textContent = user.username;
+
+                if (user.role === 'candidate') {
+                    navCandidate.style.display = 'flex';
+                    navHR.style.display = 'none';
+                    mobileCandidate.style.display = 'block';
+                    mobileHR.style.display = 'none';
+                } else if (user.role === 'hr') {
+                    navCandidate.style.display = 'none';
+                    navHR.style.display = 'flex';
+                    mobileCandidate.style.display = 'none';
+                    mobileHR.style.display = 'block';
+                }
+            } else {
+                navLinks.style.display = 'none';
+                navAuth.style.display = 'flex';
+                // Mobile
+                mobileAuth.style.display = 'block';
+                mobileCandidate.style.display = 'none';
+                mobileHR.style.display = 'none';
+                mobileUser.style.display = 'none';
+            }
+        }
+
+        // ─── Loading Spinner ─────────────────────────────────
+
+        function showLoading(containerId) {
+            const el = document.getElementById(containerId);
+            if (el) {
+                el.innerHTML = `
+                    <div class="flex items-center justify-center py-16">
+                        <div class="spinner"></div>
+                        <span class="ml-3 text-surface-400 text-sm">Loading...</span>
+                    </div>
+                `;
+            }
+        }
+
+        // ─── Initialize ──────────────────────────────────────
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNavbar();
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

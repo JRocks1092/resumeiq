@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+{% block title %}Applicant Analysis — ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in" id="detail-container">
+
+    <!-- Back Button -->
+    <a href="javascript:history.back()" class="inline-flex items-center text-surface-400 hover:text-primary-400 transition-colors text-sm mb-6">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Back to Applicants
+    </a>
+
+    <!-- Loading -->
+    <div id="loading" class="flex items-center justify-center py-24">
+        <div class="spinner"></div>
+        <span class="ml-3 text-surface-400 text-sm">Loading analysis...</span>
+    </div>
+
+    <!-- Content (hidden until loaded) -->
+    <div id="content" class="hidden">
+
+        <!-- Header: Candidate Info + Score -->
+        <div class="glass-card p-8 mb-6">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between">
+                <div class="flex-1 mb-4 lg:mb-0">
+                    <h1 class="text-2xl font-bold text-white mb-1" id="candidate-name">—</h1>
+                    <p class="text-surface-400 text-sm" id="candidate-email">—</p>
+                    <p class="text-surface-500 text-xs mt-1" id="vacancy-title">—</p>
+                </div>
+
+                <!-- Score Circle -->
+                <div class="flex items-center space-x-6">
+                    <div class="text-center">
+                        <div class="score-circle mx-auto mb-2" id="score-circle">
+                            <canvas id="score-gauge" width="120" height="120"></canvas>
+                        </div>
+                        <div id="rating-badge" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="glass-card p-6 mb-6">
+            <h2 class="text-lg font-bold text-white mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Final Summary
+            </h2>
+            <p class="text-surface-300 text-sm leading-relaxed" id="final-summary">—</p>
+        </div>
+
+        <!-- Strengths + Areas to Improve -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Strengths -->
+            <div class="glass-card p-6">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Strengths
+                </h3>
+                <ul id="strengths-list" class="space-y-2">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+
+            <!-- Areas to Improve -->
+            <div class="glass-card p-6">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    Areas to Improve
+                </h3>
+                <ul id="improve-list" class="space-y-2">
+                    <!-- Populated by JS -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Section Breakdown Chart -->
+        <div class="glass-card p-6 mb-6">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Section Breakdown
+            </h3>
+            <div class="h-64">
+                <canvas id="section-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Keyword Analysis -->
+        <div class="glass-card p-6 mb-6">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                </svg>
+                Keyword Analysis
+                <span class="ml-auto badge badge-analysed" id="keyword-match-pct">0%</span>
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h4 class="text-sm font-semibold text-green-400 mb-3">✓ Matched Keywords</h4>
+                    <div id="matched-keywords" class="flex flex-wrap gap-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-red-400 mb-3">✗ Missing Keywords</h4>
+                    <div id="missing-keywords" class="flex flex-wrap gap-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects -->
+        <div class="glass-card p-6 mb-6">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                Projects
+            </h3>
+            <div id="projects-list" class="space-y-3">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Experience -->
+        <div class="glass-card p-6 mb-6">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.193 23.193 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                Experience
+            </h3>
+            <div id="experience-list" class="space-y-3">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Actions: View PDF + Status Update -->
+        <div class="glass-card p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <button id="view-pdf-btn" onclick="viewPDF()" class="btn-primary px-6 py-3 rounded-xl text-white font-medium text-sm flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                View Resume PDF
+            </button>
+
+            <div class="flex items-center space-x-3">
+                <label class="text-surface-400 text-sm font-medium">Update Status:</label>
+                <select id="status-select" onchange="updateStatus()" class="input-field px-4 py-2 text-sm rounded-lg">
+                    <option value="accepted">Accepted</option>
+                    <option value="analysed">Analysed</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const applicationId = '{{ application_id }}';
+    let documentRef = '';
+    let currentStatus = '';
+
+    async function loadAnalytics() {
+        try {
+            // Load application detail
+            const appResponse = await apiFetch(`/api/applications/${applicationId}/`, { method: 'GET' });
+            const app = await appResponse.json();
+            documentRef = app.document_reference;
+            currentStatus = app.status;
+
+            // Load analytics
+            const response = await apiFetch(`/api/analytics/${applicationId}/`, { method: 'GET' });
+            const data = await response.json();
+
+            // Hide loading, show content
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+
+            // Candidate info
+            document.getElementById('candidate-name').textContent = data.candidate_name;
+            document.getElementById('candidate-email').textContent = data.candidate_email;
+            document.getElementById('vacancy-title').textContent = `Applied for: ${data.vacancy_title}`;
+
+            // Score
+            drawScoreGauge(data.overall_score);
+
+            // Rating
+            document.getElementById('rating-badge').innerHTML = getRatingBadge(data.rating);
+
+            // Summary
+            document.getElementById('final-summary').textContent = data.final_summary;
+
+            // Strengths
+            const strengthsList = document.getElementById('strengths-list');
+            strengthsList.innerHTML = (data.strengths || []).map(s =>
+                `<li class="flex items-start text-sm text-surface-300">
+                    <span class="text-green-400 mr-2 mt-0.5">✓</span>
+                    ${s}
+                </li>`
+            ).join('');
+
+            // Areas to improve
+            const improveList = document.getElementById('improve-list');
+            improveList.innerHTML = (data.areas_to_improve || []).map(a =>
+                `<li class="flex items-start text-sm text-surface-300">
+                    <span class="text-yellow-400 mr-2 mt-0.5">⚠</span>
+                    ${a}
+                </li>`
+            ).join('');
+
+            // Section breakdown chart
+            drawSectionChart(data.section_breakdown_percentage);
+
+            // Keyword analysis
+            const kw = data.keyword_analysis || {};
+            document.getElementById('keyword-match-pct').textContent = `${kw.match_percentage || 0}% Match`;
+
+            document.getElementById('matched-keywords').innerHTML = (kw.matched_keywords || []).map(k =>
+                `<span class="px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">${k}</span>`
+            ).join('');
+
+            document.getElementById('missing-keywords').innerHTML = (kw.missing_keywords || []).map(k =>
+                `<span class="px-3 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">${k}</span>`
+            ).join('');
+
+            // Projects
+            const projectsList = document.getElementById('projects-list');
+            projectsList.innerHTML = (data.projects || []).map(p => {
+                const relColor = p.relevance === 'High' ? 'text-green-400' :
+                                 p.relevance === 'Medium' ? 'text-yellow-400' : 'text-surface-400';
+                return `
+                    <div class="glass-card-light p-4">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="text-white font-medium text-sm">${p.name}</h4>
+                                <p class="text-surface-400 text-xs mt-1">${p.description}</p>
+                            </div>
+                            <span class="text-xs font-semibold ${relColor}">${p.relevance}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p class="text-surface-500 text-sm">No projects data available.</p>';
+
+            // Experience
+            const expList = document.getElementById('experience-list');
+            expList.innerHTML = (data.experience || []).map(e => {
+                const relColor = e.relevance === 'High' ? 'text-green-400' :
+                                 e.relevance === 'Medium' ? 'text-yellow-400' : 'text-surface-400';
+                return `
+                    <div class="glass-card-light p-4">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="text-white font-medium text-sm">${e.role}</h4>
+                                <p class="text-surface-400 text-xs">${e.company} • ${e.duration}</p>
+                            </div>
+                            <span class="text-xs font-semibold ${relColor}">${e.relevance}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p class="text-surface-500 text-sm">No experience data available.</p>';
+
+            // Status select
+            document.getElementById('status-select').value = currentStatus;
+
+        } catch (err) {
+            document.getElementById('loading').innerHTML = `
+                <div class="text-center py-16 text-red-400">
+                    <p class="mb-2">Failed to load analysis.</p>
+                    <p class="text-surface-500 text-sm">The analysis may still be processing.</p>
+                </div>
+            `;
+        }
+    }
+
+    function drawScoreGauge(score) {
+        const canvas = document.getElementById('score-gauge');
+        const ctx = canvas.getContext('2d');
+        const centerX = 60;
+        const centerY = 60;
+        const radius = 50;
+
+        // Background arc
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
+        ctx.lineWidth = 8;
+        ctx.stroke();
+
+        // Score arc
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle + (2 * Math.PI * score / 100);
+
+        const gradient = ctx.createLinearGradient(0, 0, 120, 120);
+        if (score >= 80) {
+            gradient.addColorStop(0, '#22c55e');
+            gradient.addColorStop(1, '#10b981');
+        } else if (score >= 60) {
+            gradient.addColorStop(0, '#6366f1');
+            gradient.addColorStop(1, '#14b8a6');
+        } else if (score >= 40) {
+            gradient.addColorStop(0, '#eab308');
+            gradient.addColorStop(1, '#f59e0b');
+        } else {
+            gradient.addColorStop(0, '#ef4444');
+            gradient.addColorStop(1, '#dc2626');
+        }
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Score text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 28px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(score, centerX, centerY - 6);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillText('/100', centerX, centerY + 16);
+    }
+
+    function drawSectionChart(breakdown) {
+        const ctx = document.getElementById('section-chart').getContext('2d');
+        const labels = Object.keys(breakdown).map(k => k.charAt(0).toUpperCase() + k.slice(1));
+        const values = Object.values(breakdown);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Score %',
+                    data: values,
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.6)',
+                        'rgba(20, 184, 166, 0.6)',
+                        'rgba(168, 85, 247, 0.6)',
+                        'rgba(249, 115, 22, 0.6)',
+                        'rgba(34, 197, 94, 0.6)',
+                    ],
+                    borderColor: [
+                        'rgba(99, 102, 241, 1)',
+                        'rgba(20, 184, 166, 1)',
+                        'rgba(168, 85, 247, 1)',
+                        'rgba(249, 115, 22, 1)',
+                        'rgba(34, 197, 94, 1)',
+                    ],
+                    borderWidth: 1,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        borderColor: 'rgba(99, 102, 241, 0.3)',
+                        borderWidth: 1,
+                        titleFont: { family: 'Inter' },
+                        bodyFont: { family: 'Inter' },
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            color: '#64748b',
+                            font: { family: 'Inter', size: 11 },
+                        },
+                        grid: {
+                            color: 'rgba(51, 65, 85, 0.3)',
+                        },
+                    },
+                    x: {
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { family: 'Inter', size: 12 },
+                        },
+                        grid: { display: false },
+                    }
+                }
+            }
+        });
+    }
+
+    function viewPDF() {
+        if (documentRef) {
+            window.open(`/media/${documentRef}`, '_blank');
+        } else {
+            showToast('No PDF available.', 'error');
+        }
+    }
+
+    async function updateStatus() {
+        const newStatus = document.getElementById('status-select').value;
+
+        try {
+            const response = await apiFetch(`/api/applications/${applicationId}/status/`, {
+                method: 'PATCH',
+                body: JSON.stringify({ status: newStatus }),
+            });
+
+            if (response.ok) {
+                showToast(`Status updated to "${newStatus}"`);
+                currentStatus = newStatus;
+            } else {
+                showToast('Failed to update status.', 'error');
+                document.getElementById('status-select').value = currentStatus;
+            }
+        } catch (err) {
+            showToast('Network error.', 'error');
+            document.getElementById('status-select').value = currentStatus;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = getUserData();
+        if (!user || user.role !== 'hr') { window.location.href = '/'; return; }
+        loadAnalytics();
+    });
+</script>
+{% endblock %}

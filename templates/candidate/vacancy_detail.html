@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}Vacancy Detail — ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in max-w-4xl mx-auto">
+    <a href="/vacancies/" class="inline-flex items-center text-surface-400 hover:text-primary-400 transition-colors text-sm mb-6">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        Back to Vacancies
+    </a>
+
+    <div id="vacancy-detail" class="glass-card p-8">
+        <div class="flex justify-center py-12"><div class="spinner"></div></div>
+    </div>
+
+    <!-- Apply Section -->
+    <div id="apply-section" class="hidden mt-6">
+        <div class="glass-card p-8 gradient-border">
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Apply for this Position
+            </h3>
+            <form id="apply-form" onsubmit="handleApply(event)">
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-surface-300 mb-2">Upload Resume (PDF only)</label>
+                    <div id="dropzone" class="input-field border-2 border-dashed border-surface-600 rounded-xl p-8 text-center cursor-pointer hover:border-primary-500 transition-all"
+                         onclick="document.getElementById('resume-file').click()"
+                         ondragover="event.preventDefault(); this.classList.add('border-primary-500', 'bg-primary-500/5')"
+                         ondragleave="this.classList.remove('border-primary-500', 'bg-primary-500/5')"
+                         ondrop="handleDrop(event)">
+                        <svg class="w-10 h-10 mx-auto text-surface-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p class="text-surface-400 text-sm" id="dropzone-text">Drag and drop your resume or <span class="text-primary-400 font-medium">click to browse</span></p>
+                        <p class="text-surface-500 text-xs mt-1">PDF files only, max 10MB</p>
+                        <input type="file" id="resume-file" accept=".pdf" class="hidden" onchange="handleFileSelect(this)">
+                    </div>
+                </div>
+                <div id="apply-error" class="hidden mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm"></div>
+                <button type="submit" id="apply-btn" class="btn-accent w-full py-3 rounded-xl text-white font-semibold text-sm">Submit Application</button>
+            </form>
+            <div id="apply-processing" class="hidden mt-6 p-4 glass-card-light text-center">
+                <div class="spinner mx-auto mb-3"></div>
+                <p class="text-surface-300 text-sm font-medium">Your resume is being analysed by our AI...</p>
+                <p class="text-surface-500 text-xs mt-1">This may take a minute. You can check status in My Applications.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Already Applied -->
+    <div id="already-applied" class="hidden mt-6">
+        <div class="glass-card-light p-6 text-center">
+            <div class="badge badge-analysed text-sm mb-2">Already Applied</div>
+            <p class="text-surface-400 text-sm">You have already submitted an application for this vacancy.</p>
+            <a href="/my-applications/" class="text-primary-400 hover:text-primary-300 text-sm font-medium mt-2 inline-block">View My Applications →</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const vacancyId = '{{ vacancy_id }}';
+
+    async function loadVacancy() {
+        try {
+            const response = await apiFetch(`/api/vacancies/${vacancyId}/`, { method: 'GET' });
+            const vacancy = await response.json();
+            if(Date.parse(vacancy.date) < Date.now()) {
+                document.getElementById('apply-section').innerHTML = '<button type="submit" id="apply-btn" class="btn-danger w-full py-3 rounded-xl text-white font-semibold text-sm" style="pointer-events: none;">Vacancy Expired</button>';
+                
+            }
+            document.getElementById('vacancy-detail').innerHTML = `
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-white mb-2">${vacancy.title}</h1>
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-surface-400">
+                        <span>Posted ${new Date(vacancy.created_at).toLocaleDateString()}</span>
+                        <span>•</span>
+                        <span>${vacancy.no_of_positions} position${vacancy.no_of_positions !== 1 ? 's' : ''}</span>
+                        <span>•</span>
+                        <span>Deadline: ${new Date(vacancy.date).toLocaleDateString()}</span>
+                    </div>
+                </div>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-sm font-semibold text-primary-400 uppercase tracking-wider mb-3">Description</h3>
+                        <p class="text-surface-300 text-sm leading-relaxed whitespace-pre-wrap">${vacancy.description}</p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-accent-400 uppercase tracking-wider mb-3">Requirements</h3>
+                        <p class="text-surface-300 text-sm leading-relaxed whitespace-pre-wrap">${vacancy.requirements}</p>
+                    </div>
+                </div>`;
+
+            const user = getUserData();
+            if (user && user.role === 'candidate') {
+                const appsResponse = await apiFetch('/api/applications/list/', { method: 'GET' });
+                const apps = await appsResponse.json();
+                if (apps.some(a => a.vacancy === vacancyId)) {
+                    document.getElementById('already-applied').classList.remove('hidden');
+                } else {
+                    document.getElementById('apply-section').classList.remove('hidden');
+                }
+            }
+        } catch (err) {
+            document.getElementById('vacancy-detail').innerHTML = '<div class="text-center py-8 text-red-400">Failed to load vacancy details.</div>';
+        }
+    }
+
+    function handleFileSelect(input) {
+        const file = input.files[0];
+        if (file) document.getElementById('dropzone-text').innerHTML = `<span class="text-accent-400 font-medium">${file.name}</span> <span class="text-surface-500">(${(file.size/1024/1024).toFixed(2)} MB)</span>`;
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        document.getElementById('dropzone').classList.remove('border-primary-500', 'bg-primary-500/5');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type === 'application/pdf') { document.getElementById('resume-file').files = e.dataTransfer.files; handleFileSelect(document.getElementById('resume-file')); }
+    }
+
+    async function handleApply(e) {
+        e.preventDefault();
+        const btn = document.getElementById('apply-btn');
+        const errorDiv = document.getElementById('apply-error');
+        const fileInput = document.getElementById('resume-file');
+        errorDiv.classList.add('hidden');
+
+        if (!fileInput.files[0]) { errorDiv.textContent = 'Please select a PDF file.'; errorDiv.classList.remove('hidden'); return; }
+
+        const formData = new FormData();
+        formData.append('vacancy_id', vacancyId);
+        formData.append('resume', fileInput.files[0]);
+
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner mx-auto" style="width:20px;height:20px;border-width:2px;border-top-color:#fff;"></div>';
+
+        try {
+            const response = await apiFetch('/api/applications/', { method: 'POST', body: formData });
+            const data = await response.json();
+            if (response.ok) {
+                showToast('Application submitted successfully!');
+                document.getElementById('apply-section').classList.add('hidden');
+                document.getElementById('apply-processing').classList.remove('hidden');
+                setTimeout(() => { window.location.href = '/my-applications/'; }, 3000);
+            } else {
+                errorDiv.textContent = typeof data === 'object' ? JSON.stringify(data) : data;
+                errorDiv.classList.remove('hidden');
+            }
+        } catch (err) { errorDiv.textContent = 'Network error.'; errorDiv.classList.remove('hidden'); }
+        finally { btn.disabled = false; btn.textContent = 'Submit Application'; }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadVacancy);
+</script>
+{% endblock %}
