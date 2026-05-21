@@ -173,6 +173,7 @@ User profile:
 Vacancies:
 - `GET /api/vacancies/`
 - `POST /api/vacancies/`
+- `GET /api/vacancies/available/`
 - `GET /api/vacancies/{id}/`
 - `PUT/PATCH /api/vacancies/{id}/`
 - `DELETE /api/vacancies/{id}/`

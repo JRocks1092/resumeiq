@@ -5,6 +5,7 @@ Models for the vacancies app.
 import uuid
 from django.db import models
 from django.conf import settings
+from django.utils.timezone import now
 
 
 class Vacancy(models.Model):

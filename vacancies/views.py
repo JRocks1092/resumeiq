@@ -2,18 +2,30 @@
 Views for the vacancies app — API + template views.
 """
 
+from django.utils.timezone import now
 from rest_framework import generics, permissions
 from django.views.generic import TemplateView
 from users.permissions import IsHR
 from .models import Vacancy
-from .serializers import VacancySerializer, VacancyListSerializer
-
+from .serializers import VacancySerializer, VacancyListSerializer,AvailableVacancyListSerializer
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 # ─── API Views ───────────────────────────────────────────────
 
+@api_view(['GET'])
+def get_available_vacancies(request):
+    """
+    GET /api/vacancies/available/ — List all available vacancies
+    """
+    vacancies = Vacancy.objects.filter(date__gte=now().date())
+    serializer = AvailableVacancyListSerializer(vacancies, many=True)
+    return Response(serializer.data)
+
+
 class VacancyListCreateView(generics.ListCreateAPIView):
     """
-    GET  /api/vacancies/       — List all vacancies (public)
+    GET  /api/vacancies/       — List all vacancies (authenticated users)
     POST /api/vacancies/       — Create vacancy (HR only)
     """
     queryset = Vacancy.objects.all()
@@ -26,7 +38,7 @@ class VacancyListCreateView(generics.ListCreateAPIView):
     def get_permissions(self):
         if self.request.method == 'POST':
             return [permissions.IsAuthenticated(), IsHR()]
-        return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
 
 class VacancyDetailView(generics.RetrieveUpdateDestroyAPIView):

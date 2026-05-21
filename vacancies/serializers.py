@@ -30,3 +30,11 @@ class VacancyListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vacancy
         fields = ['id', 'title', 'no_of_positions', 'date', 'created_at']
+
+
+class AvailableVacancyListSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for available vacancy listings."""
+
+    class Meta:
+        model = Vacancy
+        fields = ['id', 'title', 'description', 'requirements','no_of_positions', 'date', 'created_at']
