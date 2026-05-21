@@ -1,0 +1,549 @@
+{% extends 'base.html' %}
+{% block title %}Match My Resume — ResumeIQ{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ─── Drop Zone ─────────────────────────────────────── */
+    .drop-zone {
+        border: 2px dashed rgba(99, 102, 241, 0.35);
+        border-radius: 16px;
+        padding: 48px 24px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(99, 102, 241, 0.04);
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+        border-color: #818cf8;
+        background: rgba(99, 102, 241, 0.1);
+        box-shadow: 0 0 30px rgba(99, 102, 241, 0.1);
+    }
+
+    .drop-zone.has-file {
+        border-color: #14b8a6;
+        background: rgba(20, 184, 166, 0.06);
+    }
+
+    /* ─── Indeterminate Progress Bar ────────────────────── */
+    .progress-bar-track {
+        width: 100%;
+        height: 6px;
+        background: rgba(99, 102, 241, 0.15);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        width: 35%;
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1, #14b8a6, #6366f1);
+        background-size: 200% 100%;
+        border-radius: 3px;
+        animation: progressSlide 1.8s ease-in-out infinite;
+    }
+
+    @keyframes progressSlide {
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(400%);
+        }
+    }
+
+    /* ─── Large Spinner ─────────────────────────────────── */
+    .spinner-lg {
+        border: 4px solid rgba(99, 102, 241, 0.15);
+        border-top: 4px solid #6366f1;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        animation: spin 0.9s linear infinite;
+    }
+
+    /* ─── Match Score Bar ───────────────────────────────── */
+    .match-bar-track {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .match-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Score colours */
+    .score-green {
+        background: linear-gradient(90deg, #22c55e, #4ade80);
+    }
+
+    .score-yellow {
+        background: linear-gradient(90deg, #eab308, #fbbf24);
+    }
+
+    .score-red {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+    }
+
+    .badge-score-green {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .badge-score-yellow {
+        background: rgba(234, 179, 8, 0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(234, 179, 8, 0.3);
+    }
+
+    .badge-score-red {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* ─── Result Card ───────────────────────────────────── */
+    .result-card {
+        animation: fadeIn 0.5s ease-out both;
+    }
+
+    /* ─── Stagger animation for result cards ────────────── */
+    .result-card:nth-child(1) {
+        animation-delay: 0.05s;
+    }
+
+    .result-card:nth-child(2) {
+        animation-delay: 0.15s;
+    }
+
+    .result-card:nth-child(3) {
+        animation-delay: 0.25s;
+    }
+
+    .result-card:nth-child(4) {
+        animation-delay: 0.35s;
+    }
+
+    .result-card:nth-child(5) {
+        animation-delay: 0.45s;
+    }
+
+    .result-card:nth-child(6) {
+        animation-delay: 0.55s;
+    }
+
+    .result-card:nth-child(7) {
+        animation-delay: 0.65s;
+    }
+
+    .result-card:nth-child(8) {
+        animation-delay: 0.75s;
+    }
+
+    /* ─── File info chip ────────────────────────────────── */
+    .file-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(20, 184, 166, 0.1);
+        border: 1px solid rgba(20, 184, 166, 0.25);
+        border-radius: 9999px;
+        padding: 6px 16px;
+        font-size: 0.85rem;
+        color: #5eead4;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in max-w-3xl mx-auto">
+
+    <!-- ═══════ IDLE STATE — Upload Form ═══════ -->
+    <div id="state-idle">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-white mb-3">Match Your Resume to Vacancies</h1>
+            <p class="text-surface-400 max-w-lg mx-auto">
+                Upload your resume and we'll rank all open positions by how well you fit each role.
+            </p>
+        </div>
+
+        <div class="glass-card p-8">
+            <!-- Drop Zone -->
+            <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" accept=".pdf,application/pdf" class="hidden" />
+                <div class="mb-4">
+                    <svg class="w-14 h-14 mx-auto text-primary-400 opacity-60" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <p class="text-surface-300 font-medium mb-1">Drop your PDF here</p>
+                <p class="text-surface-500 text-sm">or click to browse</p>
+                <p class="text-surface-600 text-xs mt-3">Accepts PDF only · Max 5 MB</p>
+            </div>
+
+            <!-- File info (hidden until file selected) -->
+            <div id="file-info" class="mt-5 text-center" style="display:none;">
+                <span class="file-chip">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span id="file-name">file.pdf</span>
+                    <span class="text-surface-500">·</span>
+                    <span id="file-size">0 KB</span>
+                </span>
+            </div>
+
+            <!-- Validation error -->
+            <div id="file-error" class="mt-4 text-center text-red-400 text-sm font-medium" style="display:none;"></div>
+
+            <!-- Submit button -->
+            <div class="mt-6 text-center">
+                <button id="btn-submit" onclick="submitResume()" disabled class="btn-disable text-white font-semibold px-8 py-3 rounded-xl text-sm
+                               disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+                               transition-all duration-300">
+                    Analyse My Resume
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ LOADING STATE ═══════ -->
+    <div id="state-loading" style="display:none;">
+        <div class="glass-card p-10 text-center">
+            <div class="flex justify-center mb-6">
+                <div class="spinner-lg"></div>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Analysing your resume...</h2>
+            <p class="text-surface-400 text-sm mb-8 max-w-md mx-auto">
+                Our AI is comparing your resume against all open vacancies.<br>
+                This usually takes 15–30 seconds.
+            </p>
+            <div class="max-w-sm mx-auto mb-8">
+                <div class="progress-bar-track">
+                    <div class="progress-bar-fill"></div>
+                </div>
+            </div>
+            <button onclick="cancelPolling()"
+                class="text-surface-400 hover:text-red-400 transition-colors text-sm font-medium">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════ SUCCESS STATE — Ranked Results ═══════ -->
+    <div id="state-success" style="display:none;">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-accent-500/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-white">Analysis complete</h2>
+                    <p class="text-surface-400 text-sm" id="results-count">0 vacancies matched</p>
+                </div>
+            </div>
+            <button onclick="resetToIdle()" class="btn-accent text-white font-medium px-5 py-2.5 rounded-xl text-sm">
+                Try Another Resume
+            </button>
+        </div>
+
+        <div id="results-container" class="space-y-4"></div>
+    </div>
+
+    <!-- ═══════ ERROR STATE ═══════ -->
+    <div id="state-error" style="display:none;">
+        <div class="glass-card p-10 text-center">
+            <div class="w-14 h-14 mx-auto rounded-full bg-red-500/10 flex items-center justify-center mb-5">
+                <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-white mb-2">Something went wrong</h2>
+            <p class="text-surface-400 text-sm mb-2">We couldn't complete the analysis.</p>
+            <p class="text-surface-500 text-xs mb-6" id="error-detail">This is usually a temporary issue.</p>
+            <button onclick="resetToIdle()" class="btn-primary text-white font-semibold px-8 py-3 rounded-xl text-sm">
+                Try Again
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ─── State Machine ──────────────────────────────────────
+    let currentState = 'idle';
+    let pollInterval = null;
+    let pollTimeout = null;
+    let selectedFile = null;
+
+    function setState(state) {
+        currentState = state;
+        document.getElementById('state-idle').style.display = state === 'idle' ? 'block' : 'none';
+        document.getElementById('state-loading').style.display = state === 'loading' ? 'block' : 'none';
+        document.getElementById('state-success').style.display = state === 'success' ? 'block' : 'none';
+        document.getElementById('state-error').style.display = state === 'error' ? 'block' : 'none';
+
+        if (state !== 'loading') stopPolling();
+    }
+
+    function resetToIdle() {
+        selectedFile = null;
+        document.getElementById('file-input').value = '';
+        document.getElementById('file-info').style.display = 'none';
+        document.getElementById('file-error').style.display = 'none';
+        const btn = document.getElementById('btn-submit');
+        btn.disabled = true;
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-disable');
+        document.getElementById('drop-zone').classList.remove('has-file');
+        setState('idle');
+    }
+
+    // ─── File Selection & Validation ────────────────────────
+
+    const fileInput = document.getElementById('file-input');
+    const dropZone = document.getElementById('drop-zone');
+
+    fileInput.addEventListener('change', (e) => {
+        handleFile(e.target.files[0]);
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+            handleFile(file);
+        }
+    });
+
+    function handleFile(file) {
+        const errorEl = document.getElementById('file-error');
+        const infoEl = document.getElementById('file-info');
+        const btn = document.getElementById('btn-submit');
+
+        errorEl.style.display = 'none';
+        infoEl.style.display = 'none';
+        btn.disabled = true;
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-disable');
+        dropZone.classList.remove('has-file');
+        selectedFile = null;
+
+        if (!file) return;
+
+        if (file.type !== 'application/pdf') {
+            errorEl.textContent = 'Only PDF files are accepted.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            errorEl.textContent = 'File size must be under 5 MB.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        selectedFile = file;
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-size').textContent = formatFileSize(file.size);
+        infoEl.style.display = 'block';
+        dropZone.classList.add('has-file');
+        btn.disabled = false;
+        btn.classList.remove('btn-disable');
+        btn.classList.add('btn-primary');
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    // ─── Submit & Polling ───────────────────────────────────
+
+    async function submitResume() {
+        if (!selectedFile) return;
+
+        setState('loading');
+
+        const formData = new FormData();
+        formData.append('resume', selectedFile);
+
+        try {
+            const response = await apiFetch('/api/vacancies/match/', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response || !response.ok) {
+                const err = response ? await response.json() : {};
+                throw new Error(err.error || 'Failed to submit resume.');
+            }
+
+            const data = await response.json();
+            startPolling(data.task_id);
+
+        } catch (err) {
+            document.getElementById('error-detail').textContent = err.message || 'This is usually a temporary issue.';
+            setState('error');
+        }
+    }
+
+    function startPolling(taskId) {
+        pollInterval = setInterval(async () => {
+            try {
+                const response = await apiFetch(`/api/vacancies/match/${taskId}/`, {
+                    method: 'GET',
+                });
+
+                if (!response) {
+                    clearInterval(pollInterval);
+                    document.getElementById('error-detail').textContent = 'Authentication error. Please log in again.';
+                    setState('error');
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (data.status === 'SUCCESS') {
+                    stopPolling();
+                    renderResults(data.results);
+                    setState('success');
+                } else if (data.status === 'FAILURE') {
+                    stopPolling();
+                    document.getElementById('error-detail').textContent = data.error || 'Analysis failed. Please try again.';
+                    setState('error');
+                }
+            } catch (err) {
+                stopPolling();
+                document.getElementById('error-detail').textContent = 'Network error during polling.';
+                setState('error');
+            }
+        }, 3000);
+
+        pollTimeout = setTimeout(() => {
+            stopPolling();
+            document.getElementById('error-detail').textContent = 'Taking too long — please try again later.';
+            setState('error');
+        }, 3 * 60 * 1000);
+    }
+
+    function stopPolling() {
+        if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        if (pollTimeout) { clearTimeout(pollTimeout); pollTimeout = null; }
+    }
+
+    function cancelPolling() {
+        stopPolling();
+        resetToIdle();
+    }
+
+    // ─── Render Results ─────────────────────────────────────
+
+    function getScoreClass(score) {
+        if (score >= 80) return 'green';
+        if (score >= 50) return 'yellow';
+        return 'red';
+    }
+
+    function renderResults(results) {
+        document.getElementById('results-count').textContent = `${results.length} vacanc${results.length === 1 ? 'y' : 'ies'} matched`;
+
+        const container = document.getElementById('results-container');
+        container.innerHTML = results.map((v, i) => {
+            const cls = getScoreClass(v.match_score);
+            return `
+                <div class="glass-card p-6 result-card">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <span class="text-surface-500 font-bold text-lg">#${i + 1}</span>
+                            <div>
+                                <h3 class="text-white font-semibold text-lg">${escapeHtml(v.title)}</h3>
+                                <div class="flex flex-wrap items-center gap-3 mt-1 text-xs text-surface-500">
+                                    <span class="flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        ${v.date || '—'}
+                                    </span>
+                                    <span class="flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        ${v.no_of_positions || 0} position${(v.no_of_positions || 0) !== 1 ? 's' : ''}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="badge badge-score-${cls} text-base font-bold px-3 py-1 rounded-lg">${v.match_score}</span>
+                    </div>
+
+                    <!-- Score bar -->
+                    <div class="match-bar-track mb-4">
+                        <div class="match-bar-fill score-${cls}" style="width: ${v.match_score}%;"></div>
+                    </div>
+
+                    <!-- Summary -->
+                    <p class="text-surface-300 text-sm leading-relaxed mb-4">${escapeHtml(v.match_summary)}</p>
+
+                    <!-- Action -->
+                    <div class="text-right">
+                        <a href="/vacancies/${v.id}/"
+                           class="inline-flex items-center gap-1 text-primary-400 hover:text-primary-300 text-sm font-medium transition-colors">
+                            View Vacancy
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+
+    // ─── Auth Guard ─────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!isLoggedIn()) {
+            window.location.href = '/';
+            return;
+        }
+        const user = getUserData();
+        if (!user || user.role !== 'candidate') {
+            window.location.href = '/';
+        }
+    });
+</script>
+{% endblock %}

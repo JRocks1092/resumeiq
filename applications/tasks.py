@@ -17,7 +17,6 @@ import os
 import re
 from ollama import Client
 import fitz  # PyMuPDF
-import ollama
 from celery import shared_task
 from django.conf import settings
 

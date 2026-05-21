@@ -3,7 +3,7 @@
 ## 1. Project Overview
 
 This Django project is a resume analysis and ranking platform with two primary user roles:
-- **Candidates**: register, login, browse vacancies, upload resume PDFs, and view their submitted applications.
+- **Candidates**: register, login, browse vacancies, upload resume PDFs, view submitted applications, and **match their resume against all open vacancies** to see a ranked fit score.
 - **HR Admins**: create and manage vacancies, view candidate applications, and see AI-generated resume analysis with ranking.
 
 The project uses Django, Django REST Framework, Celery, local Ollama AI, SQLite (for local development), and Django Templates.
@@ -26,7 +26,7 @@ resume_final/
 │   ├── asgi.py
 │   └── wsgi.py
 ├── users/                   # Custom user management + auth
-├── vacancies/              # Vacancy CRUD and vacancy pages
+├── vacancies/              # Vacancy CRUD, vacancy pages, and resume–vacancy matching
 ├── applications/           # Candidate application upload + resume ingestion
 ├── analytics/              # AI analysis storage + ranked applicant views
 ├── templates/              # HTML pages for candidate and HR UIs
@@ -84,12 +84,15 @@ Main files:
 - `models.py`
 - `serializers.py`
 - `views.py`
+- `match_utils.py` — utility functions for resume–vacancy matching
+- `match_tasks.py` — Celery task for async matching
 
 Key behavior:
 - `Vacancy` model stores job postings with fields like `title`, `description`, `requirements`, `no_of_positions`, and `date`.
 - `VacancySerializer` includes `admin_name` via the foreign key to the user who created the vacancy.
 - Vacancy list is public; creation, update, and deletion are restricted to HR users via `IsHR`.
 - Template pages include candidate vacancy browsing and HR vacancy management.
+- **Resume–Vacancy Matching** (candidate-only) is documented in section 4.5 below.
 
 ### 4.3 `applications/`
 
@@ -132,9 +135,39 @@ Key behavior:
 - The vacancy applicants endpoint sorts analysed candidates by `overall_score`, with unanalysed candidates appended afterward.
 - Template pages include HR dashboard, applicant list, and applicant detail.
 
+### 4.5 Resume–Vacancy Matching (`vacancies/match_*`)
+
+This feature allows candidates to upload their resume PDF and see **all open vacancies ranked by fit**, with a match score (0–100) and a plain-English summary per vacancy. It is a discovery/exploration tool — it does **not** create an Application record.
+
+**Architecture:**
+- Processing runs via **Celery** (because Ollama handles one request at a time).
+- Results are stored temporarily in **Redis** with a 10-minute TTL (`CELERY_RESULT_EXPIRES = 600`). No database writes.
+- The frontend polls for completion and renders results when ready.
+
+**Files:**
+
+| File | Purpose |
+|---|---|
+| `vacancies/match_utils.py` | In-memory PDF text extraction (`fitz`), prompt builder, Ollama API call, JSON response parser |
+| `vacancies/match_tasks.py` | Celery task `match_resume` — orchestrates the matching pipeline with 3 retries |
+| `vacancies/views.py` | `VacancyMatchSubmitView` (POST) and `VacancyMatchResultView` (GET) API views, plus `MatchPageView` template view |
+| `templates/candidate/match.html` | Full UI with 4 states: idle (upload form), loading (spinner + progress bar), success (ranked cards), error |
+
+**Flow:**
+1. Candidate uploads a resume PDF on `/match/`.
+2. `POST /api/vacancies/match/` validates the PDF (type, size ≤ 5MB), extracts text in memory (never saved to disk), fetches all vacancies where `date >= today`, and queues `match_resume.delay()`.
+3. Server returns `{ "task_id": "..." }` with HTTP 202.
+4. Frontend polls `GET /api/vacancies/match/{task_id}/` every 3 seconds (timeout: 3 minutes).
+5. Celery worker builds a single prompt with ALL jobs + resume, calls Ollama once, parses the JSON response, sorts by `match_score` descending, and stores results in Redis.
+6. Poll returns `{ "status": "SUCCESS", "results": [...] }` — frontend renders ranked vacancy cards with color-coded score bars (green ≥80, yellow ≥50, red <50).
+
+**Permissions:** Both endpoints require `IsAuthenticated` + `IsCandidate`. HR users cannot access this feature.
+
 ---
 
-## 5. AI Resume Analysis Flow
+## 5. AI Flows
+
+### 5.1 Resume Analysis (per-application)
 
 File: `applications/tasks.py`
 
@@ -154,6 +187,20 @@ Important implementation details:
 - The task uses `@shared_task(bind=True, max_retries=3, default_retry_delay=30)`.
 - `parse_ai_response` attempts direct JSON parsing, code block extraction, and fallback regex extraction.
 - If the task ultimately fails after retries, it sets the application back to `pending`.
+
+### 5.2 Resume–Vacancy Matching (candidate exploration)
+
+Files: `vacancies/match_utils.py`, `vacancies/match_tasks.py`
+
+This flow lets candidates match their resume against **all open vacancies at once** without creating an application:
+1. PDF text is extracted **in memory** (never saved to disk) via `extract_pdf_text(pdf_bytes)`.
+2. All vacancies with `date >= today` are serialized to a JSON array.
+3. `build_match_prompt()` inserts the jobs JSON and resume text into the AI prompt template.
+4. `call_ollama()` sends a single prompt to the Ollama model (with `think=False` forced).
+5. `parse_match_response()` parses the JSON array response, validates `match_score` (0–100) and `match_summary` per vacancy, and sorts by score descending.
+6. Results are returned to Celery's result backend (Redis) with a 10-minute TTL.
+
+The Celery task `match_resume` uses `@shared_task(bind=True, max_retries=3, default_retry_delay=30)` — same retry strategy as `analyse_resume`.
 
 ---
 
@@ -178,6 +225,8 @@ Vacancies:
 - `PUT/PATCH /api/vacancies/{id}/`
 - `DELETE /api/vacancies/{id}/`
 - `GET /api/vacancies/{id}/applicants/`
+- `POST /api/vacancies/match/` — upload resume PDF, returns `task_id` (HTTP 202) *(candidate only)*
+- `GET /api/vacancies/match/{task_id}/` — poll match task status/results *(candidate only)*
 
 Applications:
 - `POST /api/applications/`
@@ -197,6 +246,7 @@ Authentication:
 Candidate pages:
 - `/vacancies/` — vacancy listing
 - `/vacancies/{id}/` — vacancy detail
+- `/match/` — resume–vacancy matching (upload + ranked results)
 - `/my-applications/` — candidate applications list
 
 HR pages:
@@ -253,6 +303,7 @@ Environment variables are loaded from `.env` with `django-environ`.
 
 - `memory.md` tracks build progress and confirms the project has been restored, migrated, and validated.
 - `resume_analyser_plan.md` describes the project concept, roles, and architecture.
+- `match_feature_plan.md` details the resume–vacancy matching feature design, including prompt template, concurrency model, view logic, frontend states, and result card UI specification.
 
 These notes show the current project state and implementation goals.
 
