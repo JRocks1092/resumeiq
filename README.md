@@ -1,4 +1,4 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 # 🧠 ResumeIQ
 
@@ -436,4 +436,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 **Built with ❤️ using Django, Celery & Ollama**
 
 </div>
-]]>
+
