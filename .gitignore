@@ -1,5 +1,15 @@
-venv
-./db.sqlite3
-/media/*
-.env*
-__pycache__
+# Python virtual environment
+venv/
+
+# Django media uploads
+media/
+
+# SQLite database
+db.sqlite3
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
