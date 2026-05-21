@@ -138,6 +138,7 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+CELERY_RESULT_EXPIRES = 600  # Redis TTL: 10 minutes
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = DEBUG
@@ -149,6 +150,6 @@ CORS_ALLOWED_ORIGINS = [
 # Ollama AI Model
 #"gemma4:31b-cloud"
 #qwen3.5:9b
-OLLAMA_MODEL ="gemma4:31b-cloud"
+OLLAMA_MODEL ='gemma4:31b-cloud'
 OLLAMA_THINK=False
 OLLAMA_URL='http://localhost:11434'

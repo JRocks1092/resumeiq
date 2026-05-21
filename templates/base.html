@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,14 +29,21 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
 
     <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%); min-height: 100vh; }
+        * {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
 
         /* Glass morphism card */
         .glass-card {
@@ -60,6 +68,7 @@
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(20, 184, 166, 0.1));
             border-radius: 16px;
         }
+
         .gradient-border::before {
             content: '';
             position: absolute;
@@ -74,22 +83,31 @@
         }
 
         /* Glow effects */
-        .glow-primary { box-shadow: 0 0 40px rgba(99, 102, 241, 0.15); }
-        .glow-accent { box-shadow: 0 0 40px rgba(20, 184, 166, 0.15); }
+        .glow-primary {
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.15);
+        }
+
+        .glow-accent {
+            box-shadow: 0 0 40px rgba(20, 184, 166, 0.15);
+        }
 
         /* Smooth transitions */
-        .transition-all-smooth { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .transition-all-smooth {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
         /* Button hover */
         .btn-primary {
             background: linear-gradient(135deg, #6366f1, #4f46e5);
             transition: all 0.3s ease;
         }
+
         .btn-primary:hover {
             background: linear-gradient(135deg, #818cf8, #6366f1);
             transform: translateY(-1px);
             box-shadow: 0 8px 25px rgba(99, 102, 241, 0.35);
         }
+
         .btn-disable {
             background: linear-gradient(135deg, #5b6b69, #494d4d);
             transition: all 0.3s ease;
@@ -99,6 +117,7 @@
             background: linear-gradient(135deg, #14b8a6, #0d9488);
             transition: all 0.3s ease;
         }
+
         .btn-accent:hover {
             background: linear-gradient(135deg, #2dd4bf, #14b8a6);
             transform: translateY(-1px);
@@ -109,6 +128,7 @@
             background: linear-gradient(135deg, #ef4444, #dc2626);
             transition: all 0.3s ease;
         }
+
         .btn-danger:hover {
             background: linear-gradient(135deg, #f87171, #ef4444);
             transform: translateY(-1px);
@@ -122,28 +142,88 @@
             color: #e2e8f0;
             transition: all 0.3s ease;
         }
+
         .input-field:focus {
             border-color: #6366f1;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
             outline: none;
         }
-        .input-field::placeholder { color: #64748b; }
+
+        .input-field::placeholder {
+            color: #64748b;
+        }
 
         /* Status badges */
-        .badge { padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-        .badge-pending { background: rgba(151, 148, 139, 0.15); color: #f7f6f3; border: 1px solid rgba(234, 179, 8, 0.3); }
-        .badge-processing { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(59, 130, 246, 0.3); }
-        .badge-analysed { background: rgba(40, 137, 175, 0.15); color: #35cafc; border: 1px solid rgba(34, 197, 94, 0.3); }
-        .badge-rejected { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .badge-accepted { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-pending {
+            background: rgba(151, 148, 139, 0.15);
+            color: #f7f6f3;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+
+        .badge-processing {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .badge-analysed {
+            background: rgba(40, 137, 175, 0.15);
+            color: #35cafc;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .badge-rejected {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .badge-accepted {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
 
 
         /* Rating badges */
-        .rating-excellent { background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2)); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-        .rating-good { background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.2)); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
-        .rating-average { background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.2)); color: #fbbf24; border: 1px solid rgba(234, 179, 8, 0.3); }
-        .rating-below-average { background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(239, 68, 68, 0.2)); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); }
-        .rating-poor { background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2)); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .rating-excellent {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2));
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .rating-good {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(99, 102, 241, 0.2));
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .rating-average {
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.2));
+            color: #fbbf24;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+
+        .rating-below-average {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(239, 68, 68, 0.2));
+            color: #fb923c;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .rating-poor {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
 
         /* Loading spinner */
         .spinner {
@@ -154,18 +234,46 @@
             height: 24px;
             animation: spin 0.8s linear infinite;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
         /* Floating animation */
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
 
         /* Pulse glow */
         @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.1); }
-            50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.25); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(99, 102, 241, 0.25);
+            }
         }
-        .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+        .animate-pulse-glow {
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
 
         /* Score circle */
         .score-circle {
@@ -187,96 +295,222 @@
         }
 
         /* Scrollbar styling */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
 
         /* Table row hover */
-        .table-row-hover { transition: background 0.2s ease; }
-        .table-row-hover:hover { background: rgba(99, 102, 241, 0.05); }
+        .table-row-hover {
+            transition: background 0.2s ease;
+        }
+
+        .table-row-hover:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
 
         /* Fade in animation */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
 
         /* Toast notification */
         .toast {
-            position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-            padding: 16px 24px; border-radius: 12px;
-            font-weight: 500; font-size: 0.875rem;
-            transform: translateY(100px); opacity: 0;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            transform: translateY(100px);
+            opacity: 0;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .toast.show { transform: translateY(0); opacity: 1; }
-        .toast-success { background: rgba(34, 197, 94, 0.9); color: white; }
-        .toast-error { background: rgba(239, 68, 68, 0.9); color: white; }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success {
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+        }
+
+        .toast-error {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+        }
 
         /* ─── Hamburger Menu ─────────────────────────────── */
-        .hamburger { display: none; cursor: pointer; padding: 8px; }
-        .hamburger span {
-            display: block; width: 22px; height: 2px;
-            background: #94a3b8; margin: 5px 0;
-            transition: all 0.3s ease; border-radius: 2px;
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            padding: 8px;
         }
-        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
-        .hamburger.active span:nth-child(2) { opacity: 0; }
-        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+        .hamburger span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: #94a3b8;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
 
         .mobile-menu {
-            display: none; position: absolute; top: 64px; left: 0; right: 0;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);
+            display: none;
+            position: absolute;
+            top: 64px;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(99, 102, 241, 0.15);
-            padding: 16px 20px; z-index: 49;
+            padding: 16px 20px;
+            z-index: 49;
         }
-        .mobile-menu.show { display: block; animation: fadeIn 0.25s ease-out; }
-        .mobile-menu a, .mobile-menu button {
-            display: block; padding: 12px 0; font-size: 0.95rem;
-            color: #cbd5e1; text-decoration: none; border: none; background: none;
-            width: 100%; text-align: left; cursor: pointer;
+
+        .mobile-menu.show {
+            display: block;
+            animation: fadeIn 0.25s ease-out;
         }
-        .mobile-menu a:hover, .mobile-menu button:hover { color: #818cf8; }
+
+        .mobile-menu a,
+        .mobile-menu button {
+            display: block;
+            padding: 12px 0;
+            font-size: 0.95rem;
+            color: #cbd5e1;
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .mobile-menu a:hover,
+        .mobile-menu button:hover {
+            color: #818cf8;
+        }
+
         .mobile-menu .mobile-divider {
-            height: 1px; background: rgba(99, 102, 241, 0.15); margin: 8px 0;
+            height: 1px;
+            background: rgba(99, 102, 241, 0.15);
+            margin: 8px 0;
         }
 
         /* ─── Mobile Responsive ──────────────────────────── */
         @media (max-width: 768px) {
-            .hamburger { display: block; }
-            #nav-links, #nav-auth { display: none !important; }
+            .hamburger {
+                display: block;
+            }
+
+            #nav-links,
+            #nav-auth {
+                display: none !important;
+            }
 
             /* Toast repositioned */
-            .toast { left: 16px; right: 16px; bottom: 16px; text-align: center; }
+            .toast {
+                left: 16px;
+                right: 16px;
+                bottom: 16px;
+                text-align: center;
+            }
 
             /* Glass cards tighter padding */
-            .glass-card { border-radius: 12px; }
+            .glass-card {
+                border-radius: 12px;
+            }
 
             /* Score circle smaller on mobile */
-            .score-circle { width: 100px; height: 100px; }
+            .score-circle {
+                width: 100px;
+                height: 100px;
+            }
 
             /* Make tables scroll horizontally */
-            table { font-size: 0.8rem; }
-            th, td { padding: 10px 8px !important; }
+            table {
+                font-size: 0.8rem;
+            }
+
+            th,
+            td {
+                padding: 10px 8px !important;
+            }
 
             /* Full-width buttons on mobile */
-            .btn-primary, .btn-accent, .btn-disable, .btn-danger {
-                padding-left: 16px; padding-right: 16px;
+            .btn-primary,
+            .btn-accent,
+            .btn-disable,
+            .btn-danger {
+                padding-left: 16px;
+                padding-right: 16px;
             }
         }
 
         @media (max-width: 480px) {
-            h1 { font-size: 1.5rem !important; }
-            .glass-card { padding: 16px; }
+            h1 {
+                font-size: 1.5rem !important;
+            }
+
+            .glass-card {
+                padding: 16px;
+            }
         }
 
         @media (min-width: 769px) {
-            .mobile-menu { display: none !important; }
+            .mobile-menu {
+                display: none !important;
+            }
         }
     </style>
 
     {% block extra_css %}{% endblock %}
 </head>
+
 <body class="text-surface-200 antialiased">
 
     <!-- Navigation Bar -->
@@ -285,12 +519,16 @@
             <div class="flex justify-between h-16 items-center">
                 <!-- Logo -->
                 <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+                    <div
+                        class="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
                         </svg>
                     </div>
-                    <a href="/" class="text-xl font-bold bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+                    <a href="/"
+                        class="text-xl font-bold bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
                         ResumeIQ
                     </a>
                 </div>
@@ -298,27 +536,41 @@
                 <!-- Desktop Navigation Links (shown when logged in) -->
                 <div class="flex items-center space-x-4" id="nav-links" style="display: none;">
                     <div id="nav-candidate" style="display: none;" class="flex items-center space-x-4">
-                        <a href="/vacancies/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Vacancies</a>
-                        <a href="/my-applications/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">My Applications</a>
+                        <a href="/vacancies/"
+                            class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Vacancies</a>
+                        <a href="/match/"
+                            class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Match
+                            My Resume</a>
+                        <a href="/my-applications/"
+                            class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">My
+                            Applications</a>
                     </div>
                     <div id="nav-hr" style="display: none;" class="flex items-center space-x-4">
-                        <a href="/hr/dashboard/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Dashboard</a>
-                        <a href="/hr/vacancies/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Vacancies</a>
-                        <a href="/hr/create-user/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Create User</a>
+                        <a href="/hr/dashboard/"
+                            class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Dashboard</a>
+                        <a href="/hr/vacancies/"
+                            class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Vacancies</a>
+                        <a href="/hr/create-user/"
+                            class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Create
+                            User</a>
                     </div>
                     <div class="flex items-center space-x-3 ml-4 pl-4 border-l border-surface-700">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
                             <span class="text-white text-xs font-bold" id="nav-avatar">U</span>
                         </div>
                         <span class="text-surface-300 text-sm font-medium" id="nav-username">User</span>
-                        <button onclick="logout()" class="text-surface-400 hover:text-red-400 transition-colors text-sm font-medium ml-2">Logout</button>
+                        <button onclick="logout()"
+                            class="text-surface-400 hover:text-red-400 transition-colors text-sm font-medium ml-2">Logout</button>
                     </div>
                 </div>
 
                 <!-- Desktop Login link (shown when not logged in) -->
                 <div id="nav-auth" style="display: none;" class="flex items-center space-x-3">
-                    <a href="/" class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Login</a>
-                    <a href="/register/" class="btn-primary text-white text-sm font-medium px-4 py-2 rounded-lg">Register</a>
+                    <a href="/"
+                        class="text-surface-300 hover:text-primary-400 transition-colors text-sm font-medium">Login</a>
+                    <a href="/register/"
+                        class="btn-primary text-white text-sm font-medium px-4 py-2 rounded-lg">Register</a>
                 </div>
 
                 <!-- Hamburger (mobile only) -->
@@ -336,6 +588,7 @@
             </div>
             <div id="mobile-menu-candidate" style="display:none;">
                 <a href="/vacancies/">Browse Vacancies</a>
+                <a href="/match/">Match My Resume</a>
                 <a href="/my-applications/">My Applications</a>
             </div>
             <div id="mobile-menu-hr" style="display:none;">
@@ -346,7 +599,8 @@
             <div id="mobile-menu-user" style="display:none;">
                 <div class="mobile-divider"></div>
                 <div style="padding:12px 0; display:flex; align-items:center; gap:10px;">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+                    <div
+                        class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
                         <span class="text-white text-xs font-bold" id="mobile-avatar">U</span>
                     </div>
                     <span class="text-surface-300 text-sm font-medium" id="mobile-username">User</span>
@@ -562,4 +816,5 @@
 
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
