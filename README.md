@@ -117,7 +117,7 @@ All AI inference runs **locally** via [Ollama](https://ollama.com), ensuring ful
 | **Task Queue** | Celery 5.6 + Redis                                           |
 | **AI/LLM**     | Ollama (local) — default model: `gemma4:31b-cloud`            |
 | **PDF Parsing**| PyMuPDF (`fitz`)                                              |
-| **Database**   | SQLite (development) / PostgreSQL-ready                       |
+| **Database**   | SQLite (development)                     |
 | **Frontend**   | Django Templates + JavaScript + Tailwind CSS                  |
 | **HTTP Client**| HTTPX (for Ollama API calls)                                  |
 
@@ -149,30 +149,23 @@ source venv/bin/activate   # Linux/macOS
 ### 3. Install Dependencies
 
 ```bash
-pip install django django-environ djangorestframework djangorestframework-simplejwt \
-    django-cors-headers celery redis pymupdf ollama httpx psycopg2-binary
+pip install -r requirements.txt
 ```
 
-### 4. Configure Environment
 
-```bash
-cp .env.example .env
-# Edit .env with your secret key and settings
-```
-
-### 5. Run Migrations
+### 4. Run Migrations
 
 ```bash
 python manage.py migrate
 ```
 
-### 6. Create a Superuser (optional)
+### 5. Create a Superuser (optional)
 
 ```bash
 python manage.py createsuperuser
 ```
 
-### 7. Start the Services
+### 6. Start the Services
 
 **Terminal 1 — Django Development Server:**
 ```bash
